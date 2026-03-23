@@ -96,14 +96,31 @@
           <p id="detail-subtitle">Click any country on the map to inspect medal sources.</p>
         </div>
         <div class="detail-stats">
-          <div class="stat">
+          <div class="stat stat-primary">
             <span class="stat-label">Medals</span>
             <strong id="detail-total">0</strong>
           </div>
-          <div class="stat">
+          <div class="stat stat-primary">
             <span class="stat-label">Top sport</span>
             <strong id="detail-top-sport">-</strong>
           </div>
+          <div class="stat stat-secondary">
+            <span class="stat-label">Gold</span>
+            <strong id="detail-gold">0</strong>
+          </div>
+          <div class="stat stat-secondary">
+            <span class="stat-label">Silver</span>
+            <strong id="detail-silver">0</strong>
+          </div>
+          <div class="stat stat-secondary">
+            <span class="stat-label">Bronze</span>
+            <strong id="detail-bronze">0</strong>
+          </div>
+        </div>
+        <div class="detail-medal-legend">
+          <span class="detail-medal-key detail-medal-key-gold">Gold</span>
+          <span class="detail-medal-key detail-medal-key-silver">Silver</span>
+          <span class="detail-medal-key detail-medal-key-bronze">Bronze</span>
         </div>
         <div id="detail-empty-state" class="detail-empty-state">
           Click on a country to view detailed data.
@@ -111,6 +128,15 @@
         <div id="detail-chart"></div>
       </aside>
     </section>
+
+    <footer class="page-citation">
+      <p>
+        Data source: heesoo37. (n.d.). <em>120 years of Olympic history: athletes and results</em> [Data set]. Kaggle.
+        <a href="https://www.kaggle.com/datasets/heesoo37/120-years-of-olympic-history-athletes-and-results" target="_blank" rel="noreferrer">
+          https://www.kaggle.com/datasets/heesoo37/120-years-of-olympic-history-athletes-and-results
+        </a>
+      </p>
+    </footer>
   </main>
 
   <div id="tooltip" class="tooltip hidden"></div>

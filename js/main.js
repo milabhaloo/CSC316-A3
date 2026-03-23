@@ -3,6 +3,12 @@ const MAX_YEAR = 2016;
 const YEARS = [1988, 1992, 1994, 1996, 1998, 2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016];
 const ALL_VALUE = "All";
 const WORLD_GEO_URL = "data/world.geojson";
+const MEDAL_ORDER = ["Gold", "Silver", "Bronze"];
+const MEDAL_COLORS = {
+  Gold: "#d8a625",
+  Silver: "#b8b7c3",
+  Bronze: "#b56b3f"
+};
 
 const state = {
   filters: {
@@ -487,19 +493,30 @@ function updateDetailPanel() {
   );
 
   d3.select("#detail-total").text(rows.length);
+  const medalTotals = {
+    Gold: rows.filter((d) => d.Medal === "Gold").length,
+    Silver: rows.filter((d) => d.Medal === "Silver").length,
+    Bronze: rows.filter((d) => d.Medal === "Bronze").length
+  };
+
+  d3.select("#detail-gold").text(medalTotals.Gold);
+  d3.select("#detail-silver").text(medalTotals.Silver);
+  d3.select("#detail-bronze").text(medalTotals.Bronze);
 
   const sportCounts = Array.from(
-    d3.rollup(rows, (group) => group.length, (d) => d.Sport),
-    ([sport, count]) => ({ sport, count })
-  ).sort((a, b) => d3.descending(a.count, b.count));
+    d3.rollup(rows, buildSportMedalSummary, (d) => d.Sport),
+    ([sport, medalSummary]) => ({
+      sport,
+      ...medalSummary
+    })
+  ).sort((a, b) => d3.descending(a.total, b.total));
 
   d3.select("#detail-top-sport").text(sportCounts[0] ? sportCounts[0].sport : "-");
 
   if (!selectedName) {
     detailEmptyState.style("display", "block");
     d3.select("#detail-chart").style("display", "none");
-    barsGroup.selectAll("rect").remove();
-    barsGroup.selectAll(".bar-label").remove();
+    barsGroup.selectAll("*").remove();
     xAxisGroup.selectAll("*").remove();
     yAxisGroup.selectAll("*").remove();
     return;
@@ -519,7 +536,7 @@ function updateDetailPanel() {
   xAxisGroup.attr("transform", `translate(0,${detailInnerHeight})`);
 
   const xScale = d3.scaleLinear()
-    .domain([0, d3.max(topSports, (d) => d.count) || 1])
+    .domain([0, d3.max(topSports, (d) => d.total) || 1])
     .range([0, detailInnerWidth]);
 
   const yScale = d3.scaleBand()
@@ -536,24 +553,45 @@ function updateDetailPanel() {
     .call(d3.axisLeft(yScale).tickSize(0))
     .call((g) => g.selectAll("text").attr("dx", "-0.35em"));
 
-  const bars = barsGroup.selectAll("rect")
+  const sportGroups = barsGroup.selectAll(".sport-bar-group")
     .data(topSports, (d) => d.sport);
 
-  bars.join(
-    (enter) => enter.append("rect")
-      .attr("x", 0)
-      .attr("y", (d) => yScale(d.sport))
-      .attr("height", yScale.bandwidth())
-      .attr("width", 0)
-      .attr("rx", 6)
-      .attr("fill", "var(--accent)")
-      .call((enter) => enter.transition().duration(500).attr("width", (d) => xScale(d.count))),
-    (update) => update.call((update) => update.transition().duration(500)
-      .attr("y", (d) => yScale(d.sport))
-      .attr("height", yScale.bandwidth())
-      .attr("width", (d) => xScale(d.count))),
-    (exit) => exit.call((exit) => exit.transition().duration(300).attr("width", 0).remove())
-  );
+  sportGroups.join(
+    (enter) => enter.append("g")
+      .attr("class", "sport-bar-group")
+      .attr("transform", (d) => `translate(0,${yScale(d.sport) || 0})`),
+    (update) => update,
+    (exit) => exit.remove()
+  )
+    .transition()
+    .duration(500)
+    .attr("transform", (d) => `translate(0,${yScale(d.sport) || 0})`);
+
+  barsGroup.selectAll(".sport-bar-group")
+    .each(function renderSegments(datum) {
+      const group = d3.select(this);
+      const segments = getSportSegments(datum);
+
+      const rects = group.selectAll("rect")
+        .data(segments, (segment) => segment.medal);
+
+      rects.join(
+        (enter) => enter.append("rect")
+          .attr("x", (segment) => xScale(segment.start))
+          .attr("y", 0)
+          .attr("height", yScale.bandwidth())
+          .attr("width", 0)
+          .attr("fill", (segment) => MEDAL_COLORS[segment.medal])
+          .call((enter) => enter.transition().duration(500)
+            .attr("width", (segment) => xScale(segment.end) - xScale(segment.start))),
+        (update) => update.call((update) => update.transition().duration(500)
+          .attr("x", (segment) => xScale(segment.start))
+          .attr("height", yScale.bandwidth())
+          .attr("width", (segment) => xScale(segment.end) - xScale(segment.start))
+          .attr("fill", (segment) => MEDAL_COLORS[segment.medal])),
+        (exit) => exit.transition().duration(250).attr("width", 0).remove()
+      );
+    });
 
   const labels = barsGroup.selectAll(".bar-label")
     .data(topSports, (d) => d.sport);
@@ -561,19 +599,48 @@ function updateDetailPanel() {
   labels.join(
     (enter) => enter.append("text")
       .attr("class", "bar-label")
-      .attr("x", (d) => xScale(d.count) + 8)
+      .attr("x", (d) => xScale(d.total) + 8)
       .attr("y", (d) => (yScale(d.sport) || 0) + yScale.bandwidth() / 2 + 4)
       .style("opacity", 0)
-      .text((d) => d.count)
+      .text((d) => d.total)
       .call((enter) => enter.transition().duration(500).style("opacity", 1)),
     (update) => update
-      .text((d) => d.count)
+      .text((d) => d.total)
       .transition()
       .duration(500)
-      .attr("x", (d) => xScale(d.count) + 8)
+      .attr("x", (d) => xScale(d.total) + 8)
       .attr("y", (d) => (yScale(d.sport) || 0) + yScale.bandwidth() / 2 + 4),
     (exit) => exit.remove()
   );
+}
+
+function buildSportMedalSummary(group) {
+  const summary = { total: group.length, Gold: 0, Silver: 0, Bronze: 0 };
+
+  group.forEach((row) => {
+    if (MEDAL_ORDER.includes(row.Medal)) {
+      summary[row.Medal] += 1;
+    }
+  });
+
+  return summary;
+}
+
+function getSportSegments(sportSummary) {
+  let runningTotal = 0;
+
+  return MEDAL_ORDER.map((medal) => {
+    const count = sportSummary[medal];
+    const segment = {
+      medal,
+      count,
+      start: runningTotal,
+      end: runningTotal + count
+    };
+
+    runningTotal += count;
+    return segment;
+  });
 }
 
 function getYearLabel() {
