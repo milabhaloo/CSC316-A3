@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta
+    name="description"
+    content="Interactive D3 map of Olympic medal winners from 1988 to 2016."
+  >
+  <title>Olympic Medal Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;600&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="page-shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">CSC316 A3 Prototype</p>
+        <h1>Olympic Medal Map</h1>
+        <p class="lede">
+          Explore how Olympic medal wins were distributed across the world from 1988 to 2016.
+          This view includes only competitors who won a medal and supports filtering by year,
+          season, medal type, and sport.
+        </p>
+      </div>
+      <div class="hero-note">
+        <p><strong>Hover</strong> for quick details.</p>
+        <p><strong>Click</strong> a country to see where its medals came from.</p>
+      </div>
+    </section>
+
+    <section class="controls-panel">
+      <div class="control">
+        <label for="start-year-select">Start year</label>
+        <select id="start-year-select"></select>
+      </div>
+      <div class="control">
+        <label for="end-year-select">End year</label>
+        <select id="end-year-select"></select>
+      </div>
+      <div class="control">
+        <label for="season-select">Season</label>
+        <select id="season-select">
+          <option value="All">All</option>
+          <option value="Summer">Summer</option>
+          <option value="Winter">Winter</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="medal-select">Medal type</label>
+        <select id="medal-select">
+          <option value="All">All</option>
+          <option value="Gold">Gold</option>
+          <option value="Silver">Silver</option>
+          <option value="Bronze">Bronze</option>
+        </select>
+      </div>
+      <div class="control control-wide">
+        <label for="sport-dropdown-button">Sport</label>
+        <div id="sport-filter" class="multi-select">
+          <button
+            id="sport-dropdown-button"
+            class="multi-select-trigger"
+            type="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            All sports
+          </button>
+          <div id="sport-dropdown-panel" class="multi-select-panel hidden" role="group" aria-label="Select sports"></div>
+        </div>
+      </div>
+      <div class="control control-action">
+        <button id="reset-filters-button" type="button">Reset filters</button>
+      </div>
+    </section>
+
+    <section class="viz-grid">
+      <div class="card map-card">
+        <div class="card-header">
+          <h2>Medal Count by Country</h2>
+          <p id="map-subtitle">All sports, all medal types</p>
+        </div>
+        <div id="map-legend" class="map-legend"></div>
+        <div id="map"></div>
+      </div>
+
+      <aside class="card detail-card">
+        <div class="card-header">
+          <h2 id="detail-title">Select a country</h2>
+          <p id="detail-subtitle">Click any country on the map to inspect medal sources.</p>
+        </div>
+        <div class="detail-stats">
+          <div class="stat">
+            <span class="stat-label">Medals</span>
+            <strong id="detail-total">0</strong>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Top sport</span>
+            <strong id="detail-top-sport">-</strong>
+          </div>
+        </div>
+        <div id="detail-empty-state" class="detail-empty-state">
+          Click on a country to view detailed data.
+        </div>
+        <div id="detail-chart"></div>
+      </aside>
+    </section>
+  </main>
+
+  <div id="tooltip" class="tooltip hidden"></div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
